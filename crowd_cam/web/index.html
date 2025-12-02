@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrowdCam - Missing Person Detection</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+    
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      opacity: 0.9;
+      font-size: 1.1em;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .camera-section {
+      text-align: center;
+    }
+    
+    .camera-placeholder {
+      width: 100%;
+      height: 300px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      margin-bottom: 20px;
+      border: 2px dashed #ccc;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #videoElement {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+    
+    .face-overlay {
+      position: absolute;
+      border: 3px solid #00ff00;
+      border-radius: 5px;
+      background: rgba(0, 255, 0, 0.1);
+      pointer-events: none;
+    }
+    
+    .detection-info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      z-index: 10;
+    }
+    
+    .camera-controls {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+    }
+    
+    .control-btn {
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    .control-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+    
+    .camera-icon {
+      font-size: 4em;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 1.1em;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      background: #5a6fd8;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+    }
+    
+    .btn-danger {
+      background: #e74c3c;
+    }
+    
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      text-align: center;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .feature {
+      text-align: center;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 10px;
+    }
+    
+    .feature-icon {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .stat {
+      text-align: center;
+      padding: 10px;
+      background: #e8f4fd;
+      border-radius: 8px;
+    }
+    
+    .stat-number {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .missing-person {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #667eea;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5em;
+      margin-right: 15px;
+    }
+    
+    .demo-mode {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 0;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90%;
+      overflow-y: auto;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .modal-header {
+      background: #667eea;
+      color: white;
+      padding: 20px;
+      border-radius: 15px 15px 0 0;
+      position: relative;
+    }
+    
+    .close {
+      color: white;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      position: absolute;
+      right: 20px;
+      top: 15px;
+    }
+    
+    .close:hover {
+      opacity: 0.7;
+    }
+    
+    .modal-body {
+      padding: 25px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .photo-upload {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 15px;
+    }
+    
+    .photo-upload:hover {
+      border-color: #667eea;
+      background-color: #f8f9ff;
+    }
+    
+    .photo-upload.dragover {
+      border-color: #667eea;
+      background-color: #e8f4fd;
+    }
+    
+    .photo-preview {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 25px;
+      font-size: 1.1em;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      background: #5a6fd8;
+      transform: translateY(-2px);
+    }
+    
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .required {
+      color: #e74c3c;
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+    }
+    
+    /* Match Details Modal */
+    .match-modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .match-modal-content {
+      background-color: white;
+      margin: 2% auto;
+      padding: 0;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 95%;
+      overflow-y: auto;
+      animation: slideInUp 0.5s ease;
+    }
+    
+    .match-modal-header {
+      background: linear-gradient(135deg, #ff4444, #cc0000);
+      color: white;
+      padding: 25px;
+      border-radius: 15px 15px 0 0;
+      text-align: center;
+      position: relative;
+    }
+    
+    .match-modal-header h2 {
+      margin: 0;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+    
+    .match-close {
+      color: white;
+      float: right;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      opacity: 0.8;
+    }
+    
+    .match-close:hover {
+      opacity: 1;
+    }
+    
+    .match-modal-body {
+      padding: 30px;
+    }
+    
+    .match-photos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    
+    .photo-container {
+      text-align: center;
+    }
+    
+    .photo-container h3 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .photo-container img {
+      width: 100%;
+      max-width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 3px solid #ddd;
+    }
+    
+    .reference-photo {
+      border-color: #4CAF50 !important;
+    }
+    
+    .detected-photo {
+      border-color: #ff4444 !important;
+    }
+    
+    .match-info {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .match-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .match-detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    .detail-label {
+      font-weight: bold;
+      color: #555;
+    }
+    
+    .detail-value {
+      color: #333;
+      text-align: right;
+    }
+    
+    .confidence-bar {
+      background: #eee;
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff4444, #4CAF50);
+      transition: width 1s ease;
+    }
+    
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 25px;
+    }
+    
+    .action-btn {
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-confirm {
+      background: #4CAF50;
+      color: white;
+    }
+    
+    .btn-confirm:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+    }
+    
+    .btn-false-alarm {
+      background: #f44336;
+      color: white;
+    }
+    
+    .btn-false-alarm:hover {
+      background: #da190b;
+      transform: translateY(-2px);
+    }
+    
+    @keyframes slideInUp {
+      from { 
+        transform: translateY(100px); 
+        opacity: 0; 
+      }
+      to { 
+        transform: translateY(0); 
+        opacity: 1; 
+      }
+    }
+    
+    .alert-badge {
+      display: inline-block;
+      background: #ff4444;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    
+    .location-info {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔍 CrowdCam</h1>
+      <p>Missing Person Detection System</p>
+    </div>
+
+    <div class="demo-mode">
+      <strong>📸 Photo Reference Mode</strong><br>
+      1️⃣ Take your reference photo &nbsp;&nbsp; 2️⃣ Test live detection against your webcam!
+    </div>
+
+    <div class="card">
+      <h2>📸 Step 1: Take Reference Photo</h2>
+      <div class="camera-section">
+        <div class="camera-placeholder" id="referenceView">
+          <video id="referenceVideo" autoplay muted style="display:none;"></video>
+          <canvas id="referenceCanvas" style="display:none; position: absolute; top: 0; left: 0;"></canvas>
+          <img id="capturedReference" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:10px;">
+          
+          <div id="referencePlaceholder">
+            <div class="camera-icon">📸</div>
+            <p>Take Your Reference Photo</p>
+            <small>This will be the "missing person" to detect</small>
+          </div>
+        </div>
+        
+        <button class="btn" onclick="startReferenceCamera()" id="startReferenceBtn">Start Reference Camera</button>
+        <button class="btn" onclick="captureReference()" id="captureReferenceBtn" style="display:none;">📸 Take Reference Photo</button>
+        <button class="btn btn-danger" onclick="stopReferenceCamera()" style="display:none;" id="stopReferenceBtn">Stop Camera</button>
+        <button class="btn" onclick="retakeReference()" id="retakeReferenceBtn" style="display:none;">↻ Retake Photo</button>
+        
+        <div id="referenceStatus"></div>
+      </div>
+    </div>
+
+    <div class="card" id="detectionCard" style="opacity:0.3; pointer-events:none;">
+      <h2>📷 Step 2: Live Detection Test</h2>
+      <div class="camera-section">
+        <div class="camera-placeholder" id="cameraView">
+          <video id="videoElement" autoplay muted style="display:none;"></video>
+          <canvas id="overlayCanvas" style="display:none; position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+          
+          <div id="cameraPlaceholder">
+            <div class="camera-icon">🔍</div>
+            <p>Real-Time Detection</p>
+            <small>Complete Step 1 first</small>
+          </div>
+          
+          <div class="detection-info" id="detectionInfo" style="display:none;">
+            <div id="faceCount">👤 Faces: 0</div>
+            <div id="detectionStatus">Status: Ready</div>
+          </div>
+          
+          <div class="camera-controls" id="cameraControls" style="display:none;">
+            <button class="control-btn" onclick="captureFrame()">📸 Test Frame</button>
+            <button class="control-btn" onclick="switchCamera()" id="switchBtn">🔄 Switch</button>
+          </div>
+        </div>
+        
+        <button class="btn" onclick="startWebcam()" id="startCameraBtn" disabled>Start Detection Test</button>
+        <button class="btn btn-danger" onclick="stopWebcam()" style="display:none;" id="stopCameraBtn">Stop Detection</button>
+        
+        <div id="webcamStatus"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📊 Network Status</h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-number" id="activeNodes">247</div>
+          <div>Active Cameras</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number" id="totalDetections">1,453</div>
+          <div>Total Detections</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>👥 Recent Missing Persons</h2>
+      <div class="missing-person">
+        <div class="avatar">JD</div>
+        <div>
+          <strong>John Doe, 28</strong><br>
+          <small>Last seen: Downtown Mall</small>
+        </div>
+      </div>
+      <div class="missing-person">
+        <div class="avatar">JS</div>
+        <div>
+          <strong>Jane Smith, 34</strong><br>
+          <small>Last seen: Central Park</small>
+        </div>
+      </div>
+      <button class="btn" onclick="showAddPersonForm()">+ Report Missing Person</button>
+    </div>
+
+    <div class="card">
+      <h2>🌟 Features</h2>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">🔍</div>
+          <strong>AI Detection</strong>
+          <p>Real-time face recognition</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">📍</div>
+          <strong>Location</strong>
+          <p>GPS tracking</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔔</div>
+          <strong>Alerts</strong>
+          <p>Instant notifications</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🌐</div>
+          <strong>Network</strong>
+          <p>Distributed cameras</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Match Found Details Modal -->
+  <div id="matchDetailsModal" class="match-modal">
+    <div class="match-modal-content">
+      <div class="match-modal-header">
+        <span class="match-close" onclick="closeMatchModal()">&times;</span>
+        <h2>🚨 MISSING PERSON FOUND!</h2>
+        <div class="alert-badge">HIGH CONFIDENCE MATCH</div>
+      </div>
+      <div class="match-modal-body">
+        <!-- Photo Comparison -->
+        <div class="match-photos">
+          <div class="photo-container">
+            <h3>📋 Reference Photo</h3>
+            <img id="modalReferencePhoto" class="reference-photo" src="" alt="Reference Photo">
+            <p><small>Original missing person photo</small></p>
+          </div>
+          <div class="photo-container">
+            <h3>📹 Live Detection</h3>
+            <img id="modalDetectedPhoto" class="detected-photo" src="" alt="Detected Photo">
+            <p><small>Currently detected via webcam</small></p>
+          </div>
+        </div>
+
+        <!-- Match Information -->
+        <div class="match-info">
+          <div class="match-detail-row">
+            <span class="detail-label">👤 Person Name:</span>
+            <span class="detail-value" id="modalPersonName">Test Subject</span>
+          </div>
+          <div class="match-detail-row">
+            <span class="detail-label">🎯 Match Confidence:</span>
+            <span class="detail-value">
+              <span id="modalConfidence">89%</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" id="confidenceBar" style="width: 89%"></div>
+              </div>
+            </span>
+          </div>
+          <div class="match-detail-row">
+            <span class="detail-label">⏰ Detection Time:</span>
+            <span class="detail-value" id="modalDetectionTime">Just now</span>
+          </div>
+          <div class="match-detail-row">
+            <span class="detail-label">📍 Detection Location:</span>
+            <span class="detail-value" id="modalLocation">Current Location</span>
+          </div>
+          <div class="match-detail-row">
+            <span class="detail-label">📅 Missing Since:</span>
+            <span class="detail-value" id="modalMissingSince">Today</span>
+          </div>
+          <div class="match-detail-row">
+            <span class="detail-label">🆔 Case ID:</span>
+            <span class="detail-value" id="modalCaseId">MP-2024-001</span>
+          </div>
+        </div>
+
+        <!-- Location Information -->
+        <div class="location-info">
+          <h4>📍 Location Details</h4>
+          <p><strong>Coordinates:</strong> <span id="modalCoordinates">Lat: 40.7128, Lng: -74.0060</span></p>
+          <p><strong>Address:</strong> <span id="modalAddress">Approximate location based on IP</span></p>
+          <p><strong>Detection Device:</strong> <span id="modalDevice">Web Browser Camera</span></p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button class="action-btn btn-confirm" onclick="confirmMatch()">
+            ✅ Confirm Match
+          </button>
+          <button class="action-btn btn-false-alarm" onclick="reportFalseAlarm()">
+            ❌ False Alarm
+          </button>
+        </div>
+
+        <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; text-align: center;">
+          <small>
+            <strong>⚠️ Important:</strong> This is a demonstration. In a real emergency, authorities would be automatically notified.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Missing Person Form Modal -->
+  <div id="missingPersonModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>📝 Report Missing Person</h2>
+        <p>Help us find someone by providing their details</p>
+      </div>
+      <div class="modal-body">
+        <form id="missingPersonForm">
+          <!-- Photo Section -->
+          <div class="form-group">
+            <label>Photo <span class="required">*</span></label>
+            <div class="photo-upload" onclick="document.getElementById('photoInput').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+              <div id="photoUploadContent">
+                <div style="font-size: 3em; margin-bottom: 10px;">📷</div>
+                <p><strong>Click to upload or drag & drop</strong></p>
+                <p style="color: #666; font-size: 0.9em;">JPG, PNG or GIF (max 5MB)</p>
+              </div>
+              <img id="photoPreview" class="photo-preview" style="display: none;">
+            </div>
+            <input type="file" id="photoInput" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)">
+          </div>
+
+          <!-- Personal Information -->
+          <div class="form-group">
+            <label for="fullName">Full Name <span class="required">*</span></label>
+            <input type="text" id="fullName" name="fullName" required placeholder="Enter full name">
+          </div>
+
+          <div class="form-group">
+            <label for="age">Age <span class="required">*</span></label>
+            <input type="number" id="age" name="age" min="0" max="150" required placeholder="Enter age">
+          </div>
+
+          <div class="form-group">
+            <label for="gender">Gender</label>
+            <select id="gender" name="gender">
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="height">Height</label>
+            <input type="text" id="height" name="height" placeholder="e.g., 5'8&quot; or 173cm">
+          </div>
+
+          <div class="form-group">
+            <label for="description">Physical Description <span class="required">*</span></label>
+            <textarea id="description" name="description" rows="4" required placeholder="Hair color, eye color, distinguishing features, clothing when last seen, etc."></textarea>
+          </div>
+
+          <!-- Last Seen Information -->
+          <div class="form-group">
+            <label for="lastSeenDate">Last Seen Date <span class="required">*</span></label>
+            <input type="date" id="lastSeenDate" name="lastSeenDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="lastSeenLocation">Last Seen Location <span class="required">*</span></label>
+            <input type="text" id="lastSeenLocation" name="lastSeenLocation" required placeholder="Street address, landmark, or area">
+          </div>
+
+          <div class="form-group">
+            <label for="lastSeenDetails">Last Seen Details</label>
+            <textarea id="lastSeenDetails" name="lastSeenDetails" rows="3" placeholder="Additional details about circumstances when last seen"></textarea>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="form-group">
+            <label for="contactName">Contact Person <span class="required">*</span></label>
+            <input type="text" id="contactName" name="contactName" required placeholder="Your name or reporting person">
+          </div>
+
+          <div class="form-group">
+            <label for="contactPhone">Contact Phone <span class="required">*</span></label>
+            <input type="tel" id="contactPhone" name="contactPhone" required placeholder="Phone number for updates">
+          </div>
+
+          <div class="form-group">
+            <label for="contactEmail">Contact Email</label>
+            <input type="email" id="contactEmail" name="contactEmail" placeholder="Email for updates (optional)">
+          </div>
+
+          <div class="form-group">
+            <label for="relationship">Relationship to Missing Person</label>
+            <select id="relationship" name="relationship">
+              <option value="">Select relationship</option>
+              <option value="parent">Parent</option>
+              <option value="sibling">Sibling</option>
+              <option value="spouse">Spouse/Partner</option>
+              <option value="child">Child</option>
+              <option value="relative">Other Relative</option>
+              <option value="friend">Friend</option>
+              <option value="authority">Authority/Official</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <!-- Additional Information -->
+          <div class="form-group">
+            <label for="medicalConditions">Medical Conditions or Special Needs</label>
+            <textarea id="medicalConditions" name="medicalConditions" rows="2" placeholder="Any medical conditions, medications, or special needs we should know about"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="additionalInfo">Additional Information</label>
+            <textarea id="additionalInfo" name="additionalInfo" rows="3" placeholder="Any other relevant information that might help"></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-primary" id="submitBtn">
+            📝 Submit Missing Person Report
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let webcamStream = null;
+    let videoElement = null;
+    let canvas = null;
+    let context = null;
+    let detectionInterval = null;
+    let currentFacingMode = 'user'; // 'user' for front camera, 'environment' for back camera
+    let detectedFaces = [];
+    
+    // Reference photo variables
+    let referenceStream = null;
+    let referenceVideo = null;
+    let referenceCanvas = null;
+    let capturedReferenceData = null;
+    let hasReferencePhoto = false;
+
+    // Reference photo functions
+    async function startReferenceCamera() {
+      try {
+        const constraints = {
+          video: {
+            facingMode: 'user',
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false
+        };
+
+        referenceStream = await navigator.mediaDevices.getUserMedia(constraints);
+        referenceVideo = document.getElementById('referenceVideo');
+        referenceCanvas = document.getElementById('referenceCanvas');
+        
+        referenceVideo.srcObject = referenceStream;
+        
+        referenceVideo.onloadedmetadata = () => {
+          document.getElementById('referencePlaceholder').style.display = 'none';
+          referenceVideo.style.display = 'block';
+          
+          document.getElementById('startReferenceBtn').style.display = 'none';
+          document.getElementById('captureReferenceBtn').style.display = 'inline-block';
+          document.getElementById('stopReferenceBtn').style.display = 'inline-block';
+          
+          document.getElementById('referenceStatus').innerHTML = 
+            '<div class="status success">✅ Camera ready - Position yourself and click "Take Reference Photo"</div>';
+        };
+        
+      } catch (error) {
+        console.error('Error accessing reference camera:', error);
+        document.getElementById('referenceStatus').innerHTML = 
+          '<div class="status warning">❌ Failed to access camera. Please allow camera access.</div>';
+      }
+    }
+
+    function captureReference() {
+      if (!referenceVideo || !referenceCanvas) return;
+      
+      const canvas = referenceCanvas;
+      const context = canvas.getContext('2d');
+      
+      canvas.width = referenceVideo.videoWidth;
+      canvas.height = referenceVideo.videoHeight;
+      
+      // Draw the current video frame to canvas
+      context.drawImage(referenceVideo, 0, 0);
+      
+      // Get image data
+      capturedReferenceData = canvas.toDataURL('image/jpeg', 0.8);
+      
+      // Display the captured photo
+      const capturedImg = document.getElementById('capturedReference');
+      capturedImg.src = capturedReferenceData;
+      capturedImg.style.display = 'block';
+      
+      // Hide video
+      referenceVideo.style.display = 'none';
+      
+      // Update buttons
+      document.getElementById('captureReferenceBtn').style.display = 'none';
+      document.getElementById('stopReferenceBtn').style.display = 'none';
+      document.getElementById('retakeReferenceBtn').style.display = 'inline-block';
+      
+      // Stop the stream
+      if (referenceStream) {
+        referenceStream.getTracks().forEach(track => track.stop());
+      }
+      
+      // Enable detection phase
+      hasReferencePhoto = true;
+      enableDetectionPhase();
+      
+      document.getElementById('referenceStatus').innerHTML = 
+        '<div class="status success">✅ Reference photo captured! Now move to Step 2 to test detection.</div>';
+    }
+
+    function retakeReference() {
+      // Hide captured image
+      document.getElementById('capturedReference').style.display = 'none';
+      
+      // Reset buttons
+      document.getElementById('retakeReferenceBtn').style.display = 'none';
+      document.getElementById('startReferenceBtn').style.display = 'inline-block';
+      
+      // Show placeholder
+      document.getElementById('referencePlaceholder').style.display = 'block';
+      
+      // Reset state
+      hasReferencePhoto = false;
+      capturedReferenceData = null;
+      
+      // Disable detection phase
+      disableDetectionPhase();
+      
+      document.getElementById('referenceStatus').innerHTML = '';
+    }
+
+    function stopReferenceCamera() {
+      if (referenceStream) {
+        referenceStream.getTracks().forEach(track => track.stop());
+        referenceStream = null;
+      }
+      
+      referenceVideo.style.display = 'none';
+      document.getElementById('referencePlaceholder').style.display = 'block';
+      
+      document.getElementById('startReferenceBtn').style.display = 'inline-block';
+      document.getElementById('captureReferenceBtn').style.display = 'none';
+      document.getElementById('stopReferenceBtn').style.display = 'none';
+      
+      document.getElementById('referenceStatus').innerHTML = 
+        '<div class="status">📷 Reference camera stopped</div>';
+    }
+
+    function enableDetectionPhase() {
+      const detectionCard = document.getElementById('detectionCard');
+      detectionCard.style.opacity = '1';
+      detectionCard.style.pointerEvents = 'auto';
+      
+      document.getElementById('startCameraBtn').disabled = false;
+      document.getElementById('cameraPlaceholder').innerHTML = 
+        '<div class="camera-icon">🔍</div><p>Ready for Detection Test</p><small>Click "Start Detection Test" to begin</small>';
+    }
+
+    function disableDetectionPhase() {
+      const detectionCard = document.getElementById('detectionCard');
+      detectionCard.style.opacity = '0.3';
+      detectionCard.style.pointerEvents = 'none';
+      
+      document.getElementById('startCameraBtn').disabled = true;
+      document.getElementById('cameraPlaceholder').innerHTML = 
+        '<div class="camera-icon">🔍</div><p>Real-Time Detection</p><small>Complete Step 1 first</small>';
+      
+      // Stop detection if running
+      stopWebcam();
+    }
+
+    // Initialize webcam functionality
+    async function startWebcam() {
+      if (!hasReferencePhoto) {
+        alert('Please take a reference photo first!');
+        return;
+      }
+      try {
+        // Request camera permission
+        const constraints = {
+          video: {
+            facingMode: currentFacingMode,
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false
+        };
+
+        webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        videoElement = document.getElementById('videoElement');
+        canvas = document.getElementById('overlayCanvas');
+        context = canvas.getContext('2d');
+        
+        videoElement.srcObject = webcamStream;
+        
+        videoElement.onloadedmetadata = () => {
+          // Show video and hide placeholder
+          document.getElementById('cameraPlaceholder').style.display = 'none';
+          videoElement.style.display = 'block';
+          canvas.style.display = 'block';
+          document.getElementById('detectionInfo').style.display = 'block';
+          document.getElementById('cameraControls').style.display = 'flex';
+          
+          // Update button states
+          document.getElementById('startCameraBtn').style.display = 'none';
+          document.getElementById('stopCameraBtn').style.display = 'inline-block';
+          
+          // Set canvas size to match video
+          canvas.width = videoElement.videoWidth;
+          canvas.height = videoElement.videoHeight;
+          
+          // Start face detection simulation
+          startFaceDetection();
+          
+          document.getElementById('webcamStatus').innerHTML = 
+            '<div class="status success">✅ Camera Active - Testing detection against your reference photo</div>';
+        };
+        
+      } catch (error) {
+        console.error('Error accessing webcam:', error);
+        let errorMessage = 'Failed to access camera. ';
+        
+        if (error.name === 'NotAllowedError') {
+          errorMessage += 'Please allow camera access and try again.';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage += 'No camera device found.';
+        } else {
+          errorMessage += 'Please check camera permissions.';
+        }
+        
+        document.getElementById('webcamStatus').innerHTML = 
+          `<div class="status warning">❌ ${errorMessage}</div>`;
+      }
+    }
+
+    function stopWebcam() {
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+        webcamStream = null;
+      }
+      
+      if (detectionInterval) {
+        clearInterval(detectionInterval);
+        detectionInterval = null;
+      }
+      
+      // Reset UI
+      videoElement.style.display = 'none';
+      canvas.style.display = 'none';
+      document.getElementById('cameraPlaceholder').style.display = 'block';
+      document.getElementById('detectionInfo').style.display = 'none';
+      document.getElementById('cameraControls').style.display = 'none';
+      
+      document.getElementById('startCameraBtn').style.display = 'inline-block';
+      document.getElementById('stopCameraBtn').style.display = 'none';
+      
+      document.getElementById('webcamStatus').innerHTML = 
+        '<div class="status">📷 Camera stopped</div>';
+      
+      // Clear face overlays
+      if (context) {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function startFaceDetection() {
+      // Simulate face detection (in real app, this would use face detection AI)
+      detectionInterval = setInterval(() => {
+        simulateFaceDetection();
+      }, 1000);
+    }
+
+    function simulateFaceDetection() {
+      // Simulate random face detection
+      const shouldDetectFace = Math.random() > 0.7; // 30% chance of detecting a face
+      
+      if (shouldDetectFace && videoElement && context) {
+        // Clear previous overlays
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Generate random face position
+        const faceX = Math.random() * (canvas.width - 200) + 50;
+        const faceY = Math.random() * (canvas.height - 200) + 50;
+        const faceWidth = 150 + Math.random() * 100;
+        const faceHeight = 180 + Math.random() * 120;
+        
+        // Draw face detection box
+        context.strokeStyle = '#00ff00';
+        context.lineWidth = 3;
+        context.strokeRect(faceX, faceY, faceWidth, faceHeight);
+        
+        // Add face label
+        context.fillStyle = '#00ff00';
+        context.font = '14px Arial';
+        context.fillText('Face Detected', faceX, faceY - 10);
+        
+        // Update face count
+        document.getElementById('faceCount').textContent = '👤 Faces: 1';
+        document.getElementById('detectionStatus').textContent = 'Status: Face Found';
+        
+        // Simulate matching process
+        setTimeout(() => {
+          if (Math.random() > 0.8) { // 20% chance of match
+            showMatchFound();
+          } else {
+            document.getElementById('detectionStatus').textContent = 'Status: No Match';
+          }
+        }, 2000);
+        
+      } else {
+        // No face detected
+        if (context) {
+          context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        document.getElementById('faceCount').textContent = '👤 Faces: 0';
+        document.getElementById('detectionStatus').textContent = 'Status: Scanning...';
+      }
+    }
+
+    function showMatchFound() {
+      document.getElementById('detectionStatus').textContent = 'Status: 🚨 MATCH FOUND!';
+      
+      // Show notification with reference photo
+      document.getElementById('webcamStatus').innerHTML = 
+        '<div class="status warning">🚨 MATCH FOUND!<br>' +
+        '<strong>Click to view details</strong><br>' +
+        'Confidence: 89% match<br>' +
+        '<button onclick="showMatchDetails()" style="margin-top:10px; padding:8px 16px; background:#fff; color:#333; border:1px solid #ccc; border-radius:5px; cursor:pointer;">📋 View Match Details</button></div>';
+      
+      // Browser notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('CrowdCam Alert', {
+          body: 'Your reference photo has been detected! Click to view details (89% confidence)',
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎯</text></svg>'
+        });
+      }
+      
+      // Add extra visual feedback
+      const cameraView = document.getElementById('cameraView');
+      cameraView.style.border = '4px solid #ff4444';
+      cameraView.style.animation = 'pulse 1s infinite';
+      
+      // Auto-show details modal after 2 seconds
+      setTimeout(() => {
+        showMatchDetails();
+      }, 2000);
+      
+      // Reset visual effects after 10 seconds
+      setTimeout(() => {
+        document.getElementById('webcamStatus').innerHTML = 
+          '<div class="status success">✅ Camera Active - Testing detection against your reference photo</div>';
+        cameraView.style.border = '';
+        cameraView.style.animation = '';
+      }, 10000);
+    }
+
+    function showMatchDetails() {
+      // Capture current webcam frame for the "detected" photo
+      let detectedPhotoData = '';
+      if (videoElement && context) {
+        const tempCanvas = document.createElement('canvas');
+        const tempContext = tempCanvas.getContext('2d');
+        tempCanvas.width = videoElement.videoWidth;
+        tempCanvas.height = videoElement.videoHeight;
+        tempContext.drawImage(videoElement, 0, 0);
+        detectedPhotoData = tempCanvas.toDataURL('image/jpeg', 0.8);
+      }
+
+      // Populate modal with data
+      document.getElementById('modalReferencePhoto').src = capturedReferenceData || '';
+      document.getElementById('modalDetectedPhoto').src = detectedPhotoData;
+      document.getElementById('modalPersonName').textContent = 'Reference Test Subject';
+      document.getElementById('modalConfidence').textContent = '89%';
+      document.getElementById('confidenceBar').style.width = '89%';
+      document.getElementById('modalDetectionTime').textContent = new Date().toLocaleTimeString();
+      document.getElementById('modalLocation').textContent = 'Live Webcam Detection';
+      document.getElementById('modalMissingSince').textContent = 'Demo Session Started';
+      document.getElementById('modalCaseId').textContent = 'REF-' + Date.now().toString().slice(-6);
+      
+      // Location data (simulated)
+      document.getElementById('modalCoordinates').textContent = 'Lat: 40.7128, Lng: -74.0060 (Simulated)';
+      document.getElementById('modalAddress').textContent = 'Browser-based detection (Location services not enabled)';
+      document.getElementById('modalDevice').textContent = navigator.userAgent.includes('Mobile') ? 'Mobile Device Camera' : 'Desktop Webcam';
+
+      // Show modal
+      document.getElementById('matchDetailsModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMatchModal() {
+      document.getElementById('matchDetailsModal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+
+    function confirmMatch() {
+      alert('✅ Match Confirmed!\n\nIn a real system:\n• Authorities would be immediately notified\n• Emergency contacts would receive alerts\n• Location would be shared with search teams\n• Case status would be updated to "FOUND"\n\nThank you for helping find this missing person!');
+      closeMatchModal();
+      
+      // Update stats
+      updateStats();
+      document.getElementById('activeNodes').textContent = parseInt(document.getElementById('activeNodes').textContent) + 1;
+    }
+
+    function reportFalseAlarm() {
+      alert('❌ False Alarm Reported\n\nIn a real system:\n• This detection would be marked as incorrect\n• AI algorithm would be updated to improve accuracy\n• No alerts would be sent to authorities\n• Detection confidence would be recalibrated\n\nThank you for helping improve the system accuracy!');
+      closeMatchModal();
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('missingPersonModal');
+      const matchModal = document.getElementById('matchDetailsModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+      if (event.target === matchModal) {
+        closeMatchModal();
+      }
+    }
+
+    async function switchCamera() {
+      if (!webcamStream) return;
+      
+      // Stop current stream
+      webcamStream.getTracks().forEach(track => track.stop());
+      
+      // Switch facing mode
+      currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+      
+      // Restart with new camera
+      try {
+        const constraints = {
+          video: {
+            facingMode: currentFacingMode,
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false
+        };
+
+        webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoElement.srcObject = webcamStream;
+        
+        document.getElementById('webcamStatus').innerHTML = 
+          `<div class="status success">✅ Switched to ${currentFacingMode === 'user' ? 'front' : 'back'} camera</div>`;
+        
+      } catch (error) {
+        console.error('Error switching camera:', error);
+        document.getElementById('webcamStatus').innerHTML = 
+          '<div class="status warning">❌ Failed to switch camera</div>';
+      }
+    }
+
+    function captureFrame() {
+      if (!videoElement || !context) return;
+      
+      // Create temporary canvas for capture
+      const captureCanvas = document.createElement('canvas');
+      const captureContext = captureCanvas.getContext('2d');
+      
+      captureCanvas.width = videoElement.videoWidth;
+      captureCanvas.height = videoElement.videoHeight;
+      
+      // Draw current video frame
+      captureContext.drawImage(videoElement, 0, 0);
+      
+      // Convert to image and simulate processing
+      const imageData = captureCanvas.toDataURL('image/jpeg', 0.8);
+      
+      // Simulate face recognition processing
+      document.getElementById('webcamStatus').innerHTML = 
+        '<div class="status">📸 Frame captured - Processing for face recognition...</div>';
+      
+      setTimeout(() => {
+        const matchFound = Math.random() > 0.5; // 50% chance of match
+        if (matchFound) {
+          showMatchFound();
+        } else {
+          document.getElementById('webcamStatus').innerHTML = 
+            '<div class="status">✅ Frame processed - No matches found</div>';
+        }
+      }, 2000);
+    }
+
+    function updateStats() {
+      document.getElementById('totalDetections').textContent = '1,454';
+    }
+
+    function showAddPersonForm() {
+      document.getElementById('missingPersonModal').style.display = 'block';
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    function closeModal() {
+      document.getElementById('missingPersonModal').style.display = 'none';
+      document.body.style.overflow = 'auto'; // Restore scrolling
+      resetForm();
+    }
+
+    function resetForm() {
+      document.getElementById('missingPersonForm').reset();
+      document.getElementById('photoPreview').style.display = 'none';
+      document.getElementById('photoUploadContent').style.display = 'block';
+    }
+
+    // Photo upload handling
+    function handlePhotoUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+          alert('File size must be less than 5MB');
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('photoPreview');
+          const uploadContent = document.getElementById('photoUploadContent');
+          
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+          uploadContent.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Drag and drop handling
+    function handleDragOver(event) {
+      event.preventDefault();
+      event.currentTarget.classList.add('dragover');
+    }
+
+    function handleDragLeave(event) {
+      event.currentTarget.classList.remove('dragover');
+    }
+
+    function handleDrop(event) {
+      event.preventDefault();
+      event.currentTarget.classList.remove('dragover');
+      
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+          document.getElementById('photoInput').files = files;
+          handlePhotoUpload({ target: { files: files } });
+        } else {
+          alert('Please drop an image file');
+        }
+      }
+    }
+
+    // Form submission
+    document.getElementById('missingPersonForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      
+      // Disable submit button
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Submitting Report...';
+      
+      // Simulate form submission
+      setTimeout(() => {
+        try {
+          // Get form data
+          const formData = new FormData(this);
+          const data = {};
+          formData.forEach((value, key) => {
+            data[key] = value;
+          });
+          
+          // Validate required fields
+          if (!data.fullName || !data.age || !data.lastSeenDate || !data.lastSeenLocation || !data.contactName || !data.contactPhone) {
+            alert('❌ Please fill in all required fields marked with *');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '📝 Submit Missing Person Report';
+            return;
+          }
+          
+          console.log('Missing Person Report Data:', data);
+          
+          // Show success message
+          alert('✅ Missing Person Report Submitted Successfully!\n\n' +
+                'Report ID: MP-' + Date.now() + '\n\n' +
+                '• Photo processed and face encoding extracted\n' +
+                '• Alert broadcasted to camera network\n' +
+                '• Authorities will be notified\n' +
+                '• You will receive updates via provided contact info\n\n' +
+                'Thank you for helping find missing persons!');
+          
+          // Add to missing persons list (demo)
+          try {
+            addToMissingPersonsList(data);
+          } catch (listError) {
+            console.log('Error adding to list (non-critical):', listError);
+          }
+          
+          // Reset and close
+          closeModal();
+          
+        } catch (error) {
+          console.error('Form submission error:', error);
+          alert('❌ There was an error submitting the report. Please try again.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '📝 Submit Missing Person Report';
+        }
+      }, 2000);
+    });
+
+    function addToMissingPersonsList(data) {
+      // Find the missing persons card - it's the one with "Recent Missing Persons" title
+      const cards = document.querySelectorAll('.card');
+      let missingPersonsCard = null;
+      
+      for (let card of cards) {
+        if (card.innerHTML.includes('Recent Missing Persons')) {
+          missingPersonsCard = card;
+          break;
+        }
+      }
+      
+      if (!missingPersonsCard) {
+        console.log('Missing persons card not found');
+        return;
+      }
+      
+      // Create new person element
+      const newPerson = document.createElement('div');
+      newPerson.className = 'missing-person';
+      newPerson.innerHTML = `
+        <div class="avatar">${data.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}</div>
+        <div>
+          <strong>${data.fullName}, ${data.age}</strong><br>
+          <small>Last seen: ${data.lastSeenLocation}</small>
+        </div>
+      `;
+      
+      // Insert before the "Report Missing Person" button
+      const reportButton = missingPersonsCard.querySelector('.btn');
+      if (reportButton) {
+        missingPersonsCard.insertBefore(newPerson, reportButton);
+      } else {
+        // If no button found, just append to the card
+        missingPersonsCard.appendChild(newPerson);
+      }
+      
+      console.log('Added new missing person to list:', data.fullName);
+    }
+
+
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    // Simulate network activity
+    setInterval(() => {
+      const activeNodes = document.getElementById('activeNodes');
+      const current = parseInt(activeNodes.textContent);
+      activeNodes.textContent = current + Math.floor(Math.random() * 3 - 1);
+    }, 30000);
+
+    console.log('🔍 CrowdCam Web Demo Loaded');
+    console.log('📱 Full app features available in Flutter version');
+  </script>
+</body>
+</html>
