@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV '/home/nur/Desktop/personal/project/New folder/crowdcam_backend/.venv'
+set -gx VIRTUAL_ENV /home/nur/Desktop/personal/project/crowd_cam/crowdcam_backend/.venv
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH

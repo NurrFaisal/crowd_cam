@@ -3,7 +3,7 @@ from .models import DetectionResult, CameraUser
 
 class DetectionResultSerializer(serializers.ModelSerializer):
     missing_person_name = serializers.CharField(source='missing_person.name', read_only=True)
-    camera_user_name = serializers.CharField(source='camera_user.username', read_only=True)
+    camera_user_name = serializers.SerializerMethodField()
     
     class Meta:
         model = DetectionResult
@@ -14,6 +14,11 @@ class DetectionResultSerializer(serializers.ModelSerializer):
             'location', 'verified', 'false_positive'
         ]
         read_only_fields = ['id', 'detected_at']
+
+    def get_camera_user_name(self, obj):
+        if obj.camera_user:
+            return obj.camera_user.username
+        return None
 
 class CameraUserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)

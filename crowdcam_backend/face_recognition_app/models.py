@@ -6,7 +6,7 @@ import uuid
 class DetectionResult(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     missing_person = models.ForeignKey(MissingPerson, on_delete=models.CASCADE, related_name='detections')
-    camera_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='detections')
+    camera_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='detections')
     confidence_score = models.FloatField()
     image = models.ImageField(upload_to='detections/')
     detected_at = models.DateTimeField(auto_now_add=True)

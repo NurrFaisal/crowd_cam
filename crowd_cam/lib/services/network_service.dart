@@ -17,7 +17,7 @@ class NetworkService extends ChangeNotifier {
   List<Map<String, dynamic>> get networkAlerts => _networkAlerts;
   int get activeNodes => _activeNodes;
 
-  static const String serverUrl = 'http://localhost:8000';
+  static const String serverUrl = 'http://10.222.57.83:8001';
 
   Future<void> initialize() async {
     await _generateDeviceId();

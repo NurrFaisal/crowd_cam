@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV='/home/nur/Desktop/personal/project/New folder/crowdcam_backend/.venv'
+VIRTUAL_ENV=/home/nur/Desktop/personal/project/crowd_cam/crowdcam_backend/.venv
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

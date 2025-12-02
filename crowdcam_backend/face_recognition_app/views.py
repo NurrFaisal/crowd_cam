@@ -61,11 +61,9 @@ def detect_faces(request):
 def detection_history(request):
     try:
         if request.user.is_authenticated:
-            detections = DetectionResult.objects.filter(camera_user=request.user)
+            detections = DetectionResult.objects.filter(camera_user=request.user).order_by('-detected_at')
         else:
-            detections = DetectionResult.objects.all()[:50]
-        
-        detections = detections.order_by('-detected_at')
+            detections = DetectionResult.objects.all().order_by('-detected_at')[:50]
         
         serializer = DetectionResultSerializer(detections, many=True)
         return Response({
