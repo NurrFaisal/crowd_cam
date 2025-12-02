@@ -1,12 +1,1 @@
 Watching for file changes with StatReloader
-[02/Dec/2025 09:37:20] "GET /api/v1/face-recognition/detections/ HTTP/1.1" 200 24
-/home/nur/Desktop/personal/project/crowd_cam/crowdcam_backend/face_recognition_app/views.py changed, reloading.
-Performing system checks...
-
-System check identified no issues (0 silenced).
-December 02, 2025 - 09:37:09
-Django version 4.2.7, using settings 'crowdcam_backend.settings'
-Starting development server at http://127.0.0.1:8000/
-Quit the server with CONTROL-C.
-
-Watching for file changes with StatReloader
