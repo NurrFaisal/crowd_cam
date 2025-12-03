@@ -1,4 +1,4 @@
-#!/home/nur/Desktop/personal/project/New folder/crowdcam_backend/.venv/bin/python3
+#!/home/nur/Desktop/personal/project/crowd_cam/crowdcam_backend/.venv/bin/python3
 
 import sys
 import json

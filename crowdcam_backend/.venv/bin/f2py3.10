@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/home/nur/Desktop/personal/project/New folder/crowdcam_backend/.venv/bin/python3" "$0" "$@"
-' '''
+#!/home/nur/Desktop/personal/project/crowd_cam/crowdcam_backend/.venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
