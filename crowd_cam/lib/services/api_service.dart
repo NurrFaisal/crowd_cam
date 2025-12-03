@@ -9,7 +9,7 @@ import '../models/detection_result.dart';
 class ApiService extends ChangeNotifier {
   // ✅ Use correct base URL depending on environment
   // Real device
-  static const String baseUrl = 'http://10.222.57.83:8000/api/v1';
+  static const String baseUrl = 'http://127.0.0.1:8000/api/v1';
 
 // Android emulator
 // static const String baseUrl = 'http://10.0.2.2:8000/api/v1';

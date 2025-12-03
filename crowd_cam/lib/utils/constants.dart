@@ -1,6 +1,6 @@
 class AppConstants {
   // API Configuration
-  static const String baseUrl = 'http://10.222.57.83:8000/api/v1';
+  static const String baseUrl = 'http://127.0.0.1:8000/api/v1';
   static const String websocketUrl = 'ws://localhost:8000/ws';
   
   // App Information
