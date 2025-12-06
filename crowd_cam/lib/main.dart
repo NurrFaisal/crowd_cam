@@ -50,8 +50,12 @@ class CrowdCamApp extends StatelessWidget {
       child: MaterialApp(
         title: 'CrowdCam',
         theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
+                  useMaterial3: true,   // Enable Material 3
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: Colors.red, // Main color of your app
+                    brightness: Brightness.light,
+                  ),
+                  visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: const HomeScreen(),
         debugShowCheckedModeBanner: false,
